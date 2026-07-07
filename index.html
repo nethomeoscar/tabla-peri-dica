@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300ffcc'/%3E%3Cstop offset='100%25' stop-color='%23ff007f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='90' height='90' x='5' y='5' rx='20' fill='%230b0f19' stroke='url(%23g)' stroke-width='6'/%3E%3Ctext x='50%25' y='65%25' font-family='system-ui, sans-serif' font-weight='900' font-size='46' fill='%23ffffff' text-anchor='middle'%3EEe%3C/text%3E%3C/svg%3E">
+<title>🧪 Tabla Periódica 3D — Caza del Elemento</title>
+<style>
+    :root{
+    --bg-app:#0c1018;
+    --bg-header:#10141f;
+    --bg-sidebar:#11162296;
+    --bg-sidebar-solid:#131826;
+    --panel-border:#232a3d;
+    --canvas-bg:#f5f6f8;
+    --grid-line:#e2e5eb;
+    --grid-line-major:#d3d8e2;
+    --text-hi:#eef1f8;
+    --text-lo:#8993ab;
+    --text-mid:#c3c9db;
+    --accent:#3b82f6;
+    --accent-soft:#3b82f61f;
+    --accent-hover:#5b93f7;
+    --danger:#ef5a6f;
+    --node-fill:#ffffff;
+    --node-stroke:#3b82f6;
+    --handle-line:#9aa4bd;
+    --handle-fill:#ffffff;
+    --radius-sm:6px;
+    --radius-md:10px;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --nonmetal:#4caf50;
+    --noble:#9c27b0;
+    --alkali:#f44336;
+    --alkaline:#ff9800;
+    --metalloid:#009688;
+    --halogen:#cddc39;
+    --posttrans:#607d8b;
+    --transition:#2196f3;
+    --lanthanide:#e91e8c;
+    --actinide:#00bcd4;
+    --unknown:#795548;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden;
+    background: radial-gradient(ellipse at center, #0d1b2e 0%, #05070f 70%, #000 100%);
+    font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
+    color:#fff;
+    user-select:none;
+  }
+  #stars{
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:0;
+    background:transparent; box-shadow: 100px 200px #fff, 300px 50px #fff, 500px 400px #fff,
+    700px 150px #fff, 900px 600px #fff, 1100px 250px #fff, 200px 700px #fff, 1300px 500px #fff,
+    50px 900px #fff, 1500px 100px #fff, 400px 850px #fff, 1600px 700px #fff, 250px 400px #fff,
+    850px 50px #fff, 1050px 800px #fff, 1750px 300px #fff, 60px 550px #fff, 1900px 650px #fff;
+    animation: twinkle 4s infinite ease-in-out alternate;
+  }
+  @keyframes twinkle{ from{opacity:.3;} to{opacity:1;} }
+
+  #container{ position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; }
+
+
+  .donate-btn{
+    display:flex; align-items:center; gap:7px;
+    background:transparent; border:1px solid #3a4363; color:var(--text-hi);
+    border-radius:var(--radius-sm); padding:7px 13px; font-size:12.5px; font-weight:600;
+    cursor:pointer; font-family:var(--sans); transition:.12s;
+	text-decoration: none;
+  }
+  .donate-btn:hover{background:#e0577022; border-color:#e05770; color:#ff8fa3;}
+  .donate-btn svg{color:#ff6b81;}
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(6,8,14,0.6); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:100;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-card{
+    position:relative; width:340px; max-width:90vw;
+    background:var(--bg-sidebar-solid); border:1px solid var(--panel-border);
+    border-radius:16px; padding:26px 24px 22px 24px; text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal-close{
+    position:absolute; top:12px; right:12px; width:26px; height:26px;
+    background:transparent; border:none; color:var(--text-lo); cursor:pointer;
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{background:#1c2334; color:var(--text-hi);}
+  .modal-icon{
+    width:48px; height:48px; margin:0 auto 12px auto; border-radius:50%;
+    background:linear-gradient(135deg,#ff6b81,#e05770);
+    display:flex; align-items:center; justify-content:center; color:white;
+  }
+  .modal-card h3{margin:0 0 8px 0; font-size:17px; color:var(--text-hi);}
+  .modal-sub{font-size:12.5px; color:var(--text-lo); line-height:1.5; margin:0 0 18px 0;}
+  .donate-option{
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    padding:11px 14px; border-radius:10px; font-size:13.5px; font-weight:600;
+    text-decoration:none; margin-bottom:10px; transition:.12s; border:1px solid transparent;
+  }
+  .donate-option.paypal{background:#003087; color:white;}
+  .donate-option.paypal:hover{background:#00256b;}
+  .donate-option.stripe{background:#635bff; color:white;}
+  .donate-option.stripe:hover{background:#4f47e0;}
+  .modal-note{font-size:11px; color:var(--text-lo); margin-top:8px;}
+
+  /* ---------- TOP UI ---------- */
+  #topbar{
+    position:fixed; top:0; left:0; width:100%; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px; background:linear-gradient(to bottom, rgba(0,0,0,.75), transparent);
+    pointer-events:none;
+  }
+  #topbar h1{
+    margin:0; font-size:20px; letter-spacing:1px; font-weight:600;
+    text-shadow:0 0 10px rgba(120,180,255,.6);
+  }
+  #topbar h1 span{ color:#7fdbff; }
+  #controlsHint{ font-size:12px; opacity:.75; margin-top:2px; }
+  #buttons{ display:flex; gap:8px; pointer-events:auto; }
+  #buttons button{
+    background:rgba(20,30,50,.7);
+    border:1px solid rgba(120,180,255,.4);
+    color:#dff0ff;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:.5px;
+    transition: all .2s ease;
+    backdrop-filter: blur(4px);
+  }
+  #buttons button:hover{ background:rgba(50,90,160,.8); transform:translateY(-2px); }
+  #buttons button.active{ background:#2196f3; border-color:#7fdbff; box-shadow:0 0 14px rgba(80,160,255,.7); }
+
+  #rightUI{ display:flex; align-items:center; gap:10px; pointer-events:auto; }
+  #soundToggle{
+    background:rgba(20,30,50,.7);
+    border:1px solid rgba(120,180,255,.4);
+    color:#dff0ff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:15px;
+  }
+  #score{
+    background:rgba(20,30,50,.7);
+    border:1px solid rgba(255,215,0,.5);
+    padding:8px 16px; border-radius:8px; font-weight:700; font-size:15px;
+    box-shadow:0 0 10px rgba(255,215,0,.2);
+    white-space:nowrap;
+  }
+
+  /* ---------- BOTTOM MISSION PANEL ---------- */
+  #missionPanel{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    z-index:20; pointer-events:none;
+    background:rgba(10,15,30,.82);
+    border:1px solid rgba(120,180,255,.4);
+    border-radius:14px;
+    padding:14px 28px;
+    text-align:center;
+    min-width:320px;
+    box-shadow:0 0 25px rgba(80,150,255,.25);
+    backdrop-filter: blur(6px);
+    transition: transform .15s ease;
+  }
+  #missionPanel .label{ font-size:11px; opacity:.7; letter-spacing:1px; text-transform:uppercase; }
+  #missionPanel .mission{ font-size:19px; font-weight:700; margin-top:2px; }
+  #missionPanel .mission .sym{ color:#ffd166; }
+  #missionPanel.shake{ animation: shakeErr .35s; }
+  #missionPanel.pulse{ animation: pulseOk .5s; }
+  @keyframes shakeErr{
+    0%,100%{ transform:translateX(-50%); }
+    25%{ transform:translate(calc(-50% - 8px)); }
+    75%{ transform:translate(calc(-50% + 8px)); }
+  }
+  @keyframes pulseOk{
+    0%{ box-shadow:0 0 25px rgba(80,150,255,.25); }
+    40%{ box-shadow:0 0 45px 10px rgba(57,255,106,.6); border-color:#39ff6a; }
+    100%{ box-shadow:0 0 25px rgba(80,150,255,.25); }
+  }
+
+  /* ---------- ELEMENT CARD ---------- */
+  .element{
+    width:120px; height:160px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.35) inset;
+    border-radius:10px;
+    cursor:pointer;
+    background: rgba(0,127,127,.55);
+    text-align:center;
+    line-height:normal;
+    transition: box-shadow .3s ease, background .3s ease, transform .15s ease;
+    pointer-events:auto;
+  }
+  .element:hover{ box-shadow:0 0 25px rgba(255,255,255,.9) inset, 0 0 25px rgba(255,255,255,.5); }
+  .element .number{
+    position:absolute; top:6px; left:8px; font-size:12px; color:rgba(255,255,255,.85); font-weight:600;
+  }
+  .element .symbol{
+    position:absolute; top:34px; left:0; right:0; font-size:44px; font-weight:800; color:#fff;
+    text-shadow:0 0 8px rgba(0,0,0,.5);
+  }
+  .element .name{
+    position:absolute; bottom:26px; left:0; right:0; font-size:11.5px; color:#fff; font-weight:600;
+    padding:0 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .element .mass{
+    position:absolute; bottom:8px; left:0; right:0; font-size:10.5px; color:rgba(255,255,255,.8);
+  }
+  .element.correct{ animation: flashGreen 1s ease; }
+  .element.wrong{ animation: flashRed .5s ease; }
+  @keyframes flashGreen{
+    0%{ box-shadow:0 0 0 1px rgba(255,255,255,.35) inset; }
+    30%{ box-shadow:0 0 70px 18px #39ff6a, 0 0 0 3px #39ff6a inset; background:rgba(57,255,106,.55); transform:scale(1.08); }
+    100%{ box-shadow:0 0 0 1px rgba(255,255,255,.35) inset; transform:scale(1); }
+  }
+  @keyframes flashRed{
+    0%,100%{ box-shadow:0 0 0 1px rgba(255,255,255,.35) inset; }
+    40%{ box-shadow:0 0 35px 8px #ff3b3b, 0 0 0 3px #ff3b3b inset; background:rgba(255,59,59,.45); }
+  }
+
+  .donate-btn{
+    display:flex; align-items:center; gap:7px;
+    background:transparent; border:1px solid #3a4363; color:var(--text-hi);
+    border-radius:var(--radius-sm); padding:7px 13px; font-size:12.5px; font-weight:600;
+    cursor:pointer; font-family:var(--sans); transition:.12s;
+	text-decoration: none;
+  }
+  .donate-btn:hover{background:#e0577022; border-color:#e05770; color:#ff8fa3;}
+  .donate-btn svg{color:#ff6b81;}
+
+  /* ---------- POPUP ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    display:none; align-items:center; justify-content:center; z-index:50;
+    backdrop-filter: blur(3px);
+  }
+  #popup{
+    width:min(440px, 88vw);
+    background:linear-gradient(160deg, #16213e, #0b1120);
+    border:1px solid rgba(120,180,255,.5);
+    border-radius:18px;
+    padding:26px 24px 22px;
+    text-align:center;
+    box-shadow:0 0 50px rgba(80,150,255,.35);
+    animation: popIn .25s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes popIn{ from{ transform:scale(.7); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  #popup .bigSymbol{ font-size:56px; font-weight:800; margin-bottom:4px; text-shadow:0 0 20px currentColor; }
+  #popup .bigName{ font-size:20px; font-weight:700; margin-bottom:14px; opacity:.95; }
+  #popup .fact{ font-size:15.5px; line-height:1.5; margin-bottom:10px; }
+  #popup .resultTag{ display:inline-block; font-size:13px; font-weight:700; padding:6px 14px; border-radius:20px; margin-bottom:14px; }
+  #popup .resultTag.ok{ background:rgba(57,255,106,.18); color:#5dff8f; border:1px solid rgba(57,255,106,.5); }
+  #popup .resultTag.no{ background:rgba(255,59,59,.15); color:#ff8080; border:1px solid rgba(255,59,59,.5); }
+  #popup button{
+    margin-top:6px;
+    background:#2196f3; color:#fff; border:none; padding:10px 26px;
+    border-radius:10px; font-weight:700; font-size:14px; cursor:pointer;
+    transition:transform .15s ease, background .2s ease;
+  }
+  #popup button:hover{ background:#42a5f5; transform:translateY(-2px); }
+
+  /* estrellas y confeti al acertar */
+  .star-burst{
+    position:fixed; z-index:60; pointer-events:none;
+    font-size:22px; color:#ffd166; text-shadow:0 0 10px #ffd166;
+    animation: burstUp 1.1s ease-out forwards;
+  }
+  @keyframes burstUp{
+    0%{ opacity:1; transform:translate(0,0) scale(1) rotate(0deg); }
+    100%{ opacity:0; transform:translate(var(--dx), -140px) scale(1.4) rotate(90deg); }
+  }
+  .confetti{
+    position:fixed; z-index:59; pointer-events:none;
+    width:8px; height:14px; top:-20px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(105vh) rotate(600deg); opacity:.9; }
+  }
+
+  #levelBanner{
+    position:fixed; top:45%; left:50%; transform:translate(-50%,-50%) scale(.5);
+    z-index:65; pointer-events:none; opacity:0;
+    font-size:38px; font-weight:900; color:#ffd166;
+    text-shadow:0 0 25px rgba(255,209,102,.9), 0 0 6px #000;
+    letter-spacing:1px;
+  }
+  #levelBanner.show{ animation: levelPop 1.1s ease; }
+  @keyframes levelPop{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.4); }
+    25%{ opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+    40%{ transform:translate(-50%,-50%) scale(1); }
+    80%{ opacity:1; }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.05); }
+  }
+
+  @media (max-width: 720px){
+    #topbar{ flex-direction:column; align-items:flex-start; gap:8px; }
+    #buttons button{ padding:7px 10px; font-size:11px; }
+    #topbar h1{ font-size:16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="topbar">
+  <div>
+    <h1>🧪 Tabla Periódica <span>3D</span></h1>
+    <div id="controlsHint">🖱️ Arrastra para girar · 🔍 Scroll para zoom · Clic en una tarjeta para explorarla</div>
+  </div>
+  <div id="buttons">
+    <button data-mode="table" class="active">🔳 Tabla</button>
+    <button data-mode="sphere">🌐 Esfera</button>
+    <button data-mode="helix">🧬 Hélice</button>
+    <button data-mode="grid">▦ Cuadrícula</button>
+	<button class="donate-btn" id="btnDonate" title="Apoyar este proyecto">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+        Donación
+    </button>
+	<a class="donate-btn" id="btnContact" title="Contáctanos" href="contacto.html" target="_self" rel="noopener"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+	   Contáctanos
+	</a> 
+  </div>
+  <div id="rightUI">
+    <button id="soundToggle" title="Silenciar/activar sonido">🔊</button>
+    <div id="score">⭐ Puntos: <span id="scoreValue">0</span> &nbsp;|&nbsp; 🎯 Nivel <span id="levelValue">1</span></div>
+  </div>
+</div>
+
+<div id="missionPanel">
+  <div class="label">🎯 Misión</div>
+  <div class="mission">¡Busca el elemento: <span class="sym" id="missionText">...</span>!</div>
+</div>
+
+<div id="container"></div>
+<div id="levelBanner"></div>
+
+<div id="overlay">
+  <div id="popup">
+    <div class="bigSymbol" id="popSymbol">H</div>
+    <div class="bigName" id="popName">Hidrógeno</div>
+    <div id="popTag"></div>
+    <div class="fact" id="popFact">...</div>
+    <button id="popClose">¡Entendido!</button>
+  </div>
+</div>
+
+<!-- Three.js r128 (build clásico, no-módulo) + renderer CSS3D + controles de órbita -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- ===================== MODAL DE DONACIÓN ===================== -->
+  <div id="donateOverlay" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" id="donateClose" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <div class="modal-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+      </div>
+      <h3>Apoya este proyecto</h3>
+      <p class="modal-sub">NeónFlex Design es gratuito y de código abierto. Si te resulta útil, considera invitarnos un café — cualquier aporte ayuda a mantenerlo.</p>
+      <!--
+        NOTA PARA EL DESARROLLADOR:
+        Reemplaza los enlaces de abajo por tus datos reales:
+          - PayPal: cambia "https://paypal.me/TU_USUARIO" por tu enlace de PayPal.me
+          - Stripe: cambia "https://buy.stripe.com/TU_ENLACE" por tu Payment Link de Stripe
+      -->
+      <a class="donate-option paypal" href="https://paypal.me/oquirozs/10" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7.4 20.6h-3l2.2-14h5.8c3 0 5 1.6 4.5 4.6-.5 3.4-3 5-6.2 5H8.3l-.9 4.4Zm2.2-7.9h1.7c1.6 0 2.6-.7 2.8-2.1.2-1.4-.6-2-2.1-2H9.7l-.1.5-1 3.6Z"/></svg>
+        Donar con PayPal
+      </a>
+      <a class="donate-option stripe" href="https://buy.stripe.com/eVq28s7ML5ORf2AcUdcQU01" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.6 8.6c-1 0-1.6.4-1.6 1.1 0 .8 1 1.1 2.3 1.6 2 .7 3.7 1.6 3.7 3.8 0 2.5-2 4-4.9 4-1.5 0-3.1-.4-4.4-1v-3c1.2.7 2.7 1.2 4.1 1.2 1 0 1.7-.4 1.7-1.1 0-.9-1.1-1.2-2.5-1.7-1.9-.7-3.5-1.6-3.5-3.7 0-2.3 1.8-3.9 4.6-3.9 1.3 0 2.6.3 3.7.8v3c-1-.6-2.3-1.1-3.2-1.1Z"/></svg>
+        Donar con Stripe
+      </a>
+      <div class="modal-note">Serás redirigido a un sitio externo y seguro para completar la donación.</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+
+  // ============ DATOS: LOS 118 ELEMENTOS ============
+  // [numero, simbolo, nombre, masa, categoria, grupo(columna), periodo(fila), dato curioso]
+  const raw = [
+    [1,"H","Hidrógeno","1.008","nonmetal",1,1,"Es el elemento más ligero y abundante del universo. ¡Está en el agua que bebes y en el Sol!"],
+    [2,"He","Helio","4.0026","noble",18,1,"¡Es el gas hiperligero que hace flotar los globos de cumpleaños y pone tu voz muy graciosa!"],
+    [3,"Li","Litio","6.94","alkali",1,2,"Un metal tan blando que se puede cortar con cuchillo. ¡Le da energía a la batería del celular!"],
+    [4,"Be","Berilio","9.0122","alkaline",2,2,"Es un metal ligero y fuerte. ¡Se usa para construir telescopios espaciales que ven estrellas lejanas!"],
+    [5,"B","Boro","10.81","metalloid",13,2,"Se usa para hacer vidrios súper resistentes y ayuda a crear fuegos artificiales de color verde."],
+    [6,"C","Carbono","12.011","nonmetal",14,2,"¡El campeón de la vida! Está en los árboles, en tu cuerpo, en tus lápices y en los diamantes."],
+    [7,"N","Nitrógeno","14.007","nonmetal",15,2,"Casi todo el aire que respiras (78%) es este gas. ¡También ayuda a que las plantas crezcan felices!"],
+    [8,"O","Oxígeno","15.999","nonmetal",16,2,"¡Vital para nosotros! Lo respiras a cada segundo para tener energía para correr y jugar."],
+    [9,"F","Flúor","18.998","halogen",17,2,"¡El guardián de tus dientes! Se añade a la pasta dental para combatir las caries."],
+    [10,"Ne","Neón","20.180","noble",18,2,"Un gas brillante que, con electricidad, brilla con un hermoso color rojo-anaranjado en los letreros."],
+    [11,"Na","Sodio","22.990","alkali",1,3,"Es un metal muy loco que explota en el agua, pero unido al Cloro... ¡se convierte en la sal de tu comida!"],
+    [12,"Mg","Magnesio","24.305","alkaline",2,3,"¡Es lo que hace que las hojas de los árboles sean verdes! También ayuda a que tus músculos funcionen bien."],
+    [13,"Al","Aluminio","26.982","posttrans",13,3,"Ligero, brillante y no se oxida fácil. ¡Lo has visto envolviendo tu comida o en las latas de refresco!"],
+    [14,"Si","Silicio","28.085","metalloid",14,3,"¡El cerebro de la tecnología! Con él se fabrican los microchips de computadoras y videojuegos."],
+    [15,"P","Fósforo","30.974","nonmetal",15,3,"¡Brilla en la oscuridad bajo ciertas condiciones! Ayuda a que tus huesos y dientes sean súper fuertes."],
+    [16,"S","Azufre","32.06","nonmetal",16,3,"Es de color amarillo brillante y huele a huevo podrido cuando se quema o cerca de los volcanes."],
+    [17,"Cl","Cloro","35.45","halogen",17,3,"Un desinfectante poderoso. Se usa para mantener el agua de las piscinas limpia y libre de gérmenes."],
+    [18,"Ar","Argón","39.948","noble",18,3,"Es un gas muy flojo, no reacciona con nada. ¡Protege el filamento dentro de los focos tradicionales!"],
+    [19,"K","Potasio","39.098","alkali",1,4,"¡El combustible de los plátanos! Te ayuda a evitar calambres cuando haces mucho ejercicio."],
+    [20,"Ca","Calcio","40.078","alkaline",2,4,"¡El amigo de la leche! Construye huesos fuertes como el acero para que crezcas grande y fuerte."],
+    [21,"Sc","Escandio","44.956","transition",3,4,"Un metal poco común que se usa en bates de béisbol y bicicletas súper ligeras."],
+    [22,"Ti","Titanio","47.867","transition",4,4,"¡Fuerte como el acero pero mucho más ligero! Se usa en aviones, cohetes y hasta implantes dentales."],
+    [23,"V","Vanadio","50.942","transition",5,4,"Se mezcla con el acero para hacerlo más resistente, ¡así se fabrican herramientas irrompibles!"],
+    [24,"Cr","Cromo","51.996","transition",6,4,"Le da a los metales ese brillo espejo. ¡Por eso las llantas de los coches relucen tanto!"],
+    [25,"Mn","Manganeso","54.938","transition",7,4,"Ayuda a fabricar acero súper duro, ¡el mismo que se usa para hacer rieles de tren!"],
+    [26,"Fe","Hierro","55.845","transition",8,4,"¡Súper fuerte! Se usa para hacer puentes y rascacielos. Además, viaja en tu sangre y la hace roja."],
+    [27,"Co","Cobalto","58.933","transition",9,4,"Le da un color azul intenso hermoso a la cerámica y al vidrio, ¡como el mar profundo!"],
+    [28,"Ni","Níquel","58.693","transition",10,4,"Es resistente a la oxidación, ¡por eso se usa para hacer monedas que duran muchos años!"],
+    [29,"Cu","Cobre","63.546","transition",11,4,"¡El mensajero de la electricidad! Casi todos los cables de tu casa son de este metal rojizo."],
+    [30,"Zn","Zinc","65.38","transition",12,4,"Protege al hierro para que no se oxide, ¡como un escudo invisible contra el óxido!"],
+    [31,"Ga","Galio","69.723","posttrans",13,4,"¡Un metal mágico! Se derrite solo con el calor de tu mano, como si fuera un cubito de hielo raro."],
+    [32,"Ge","Germanio","72.630","metalloid",14,4,"Se usa en fibras ópticas, los cables súper delgados que llevan internet a la velocidad de la luz."],
+    [33,"As","Arsénico","74.922","metalloid",15,4,"Aunque en grandes cantidades es peligroso, en pequeñas dosis se usa para fabricar semiconductores."],
+    [34,"Se","Selenio","78.971","nonmetal",16,4,"¡Es como una batería solar natural! Convierte la luz en electricidad en los paneles solares."],
+    [35,"Br","Bromo","79.904","halogen",17,4,"Es uno de los pocos elementos líquidos a temperatura ambiente, ¡y tiene un color rojizo intenso!"],
+    [36,"Kr","Kriptón","83.798","noble",18,4,"Este gas noble ilumina algunas lámparas de flash de las cámaras fotográficas profesionales."],
+    [37,"Rb","Rubidio","85.468","alkali",1,5,"Es tan reactivo que si lo tocas con agua... ¡puede hasta encenderse en llamas!"],
+    [38,"Sr","Estroncio","87.62","alkaline",2,5,"Le da a los fuegos artificiales ese hermoso color rojo brillante que ves en las celebraciones."],
+    [39,"Y","Itrio","88.906","transition",3,5,"Se usa para fabricar las pantallas de televisión que muestran colores súper vivos."],
+    [40,"Zr","Zirconio","91.224","transition",4,5,"Es tan resistente al calor que se usa en los reactores donde se genera energía nuclear."],
+    [41,"Nb","Niobio","92.906","transition",5,5,"Se usa en los imanes súper potentes de los trenes que flotan y viajan a gran velocidad."],
+    [42,"Mo","Molibdeno","95.95","transition",6,5,"Hace que el acero sea más fuerte, ¡se usa hasta en las brocas que perforan roca!"],
+    [43,"Tc","Tecnecio","98","transition",7,5,"Es un elemento que casi no existe en la naturaleza, ¡los científicos lo crean en laboratorios!"],
+    [44,"Ru","Rutenio","101.07","transition",8,5,"Se usa para fabricar las puntas de las plumas fuente más finas y elegantes del mundo."],
+    [45,"Rh","Rodio","102.91","transition",9,5,"Es uno de los metales más brillantes y raros; se usa para chapar joyas de lujo."],
+    [46,"Pd","Paladio","106.42","transition",10,5,"Se usa dentro del motor de los coches para limpiar los gases y cuidar el aire que respiramos."],
+    [47,"Ag","Plata","107.87","transition",11,5,"Hermoso y brillante, usado para joyas y medallas de segundo lugar. ¡Refleja la luz mejor que nadie!"],
+    [48,"Cd","Cadmio","112.41","transition",12,5,"Se usaba en las pilas recargables antiguas, aunque hoy se reemplaza por materiales más seguros."],
+    [49,"In","Indio","114.82","posttrans",13,5,"Se usa en las pantallas táctiles de tu tablet o celular para que puedan sentir tu dedo."],
+    [50,"Sn","Estaño","118.71","posttrans",14,5,"Se combina con el cobre para hacer bronce, ¡el mismo metal de estatuas y campanas antiguas!"],
+    [51,"Sb","Antimonio","121.76","metalloid",15,5,"Se usa para hacer los materiales que evitan que la ropa y los muebles se incendien fácilmente."],
+    [52,"Te","Telurio","127.60","metalloid",16,5,"Cuando se combina con otros metales, ayuda a fabricar paneles solares súper eficientes."],
+    [53,"I","Yodo","126.90","halogen",17,5,"Tu cuerpo lo necesita en pequeñas cantidades, ¡por eso se añade a la sal de mesa yodada!"],
+    [54,"Xe","Xenón","131.29","noble",18,5,"Se usa en los potentes faros de algunos automóviles, dando una luz blanca muy brillante."],
+    [55,"Cs","Cesio","132.91","alkali",1,6,"¡Los relojes atómicos más precisos del mundo usan este elemento para medir el tiempo exacto!"],
+    [56,"Ba","Bario","137.33","alkaline",2,6,"Le da a los fuegos artificiales ese espectacular color verde brillante que ves en el cielo."],
+    [57,"La","Lantano","138.91","lanthanide",3,8,"Se usa para fabricar los lentes de las cámaras y telescopios más nítidos del mundo."],
+    [58,"Ce","Cerio","140.12","lanthanide",4,8,"Se usa dentro de los encendedores de chispa, ¡por eso a veces se llama 'piedra de mechero'!"],
+    [59,"Pr","Praseodimio","140.91","lanthanide",5,8,"Le da un color verde amarillento a los vidrios especiales que usan los soldadores para protegerse."],
+    [60,"Nd","Neodimio","144.24","lanthanide",6,8,"Se usa para fabricar los imanes más potentes del mundo, ¡tan fuertes que pueden levantar autos!"],
+    [61,"Pm","Prometio","145","lanthanide",7,8,"Es tan raro que brilla débilmente en la oscuridad, ¡y se usa en relojes que brillan de noche!"],
+    [62,"Sm","Samario","150.36","lanthanide",8,8,"Se combina en imanes especiales que funcionan incluso a temperaturas extremadamente altas."],
+    [63,"Eu","Europio","151.96","lanthanide",9,8,"Es el elemento que hace que los billetes de euro brillen bajo luz ultravioleta contra falsificaciones."],
+    [64,"Gd","Gadolinio","157.25","lanthanide",10,8,"Se usa en los hospitales para que las máquinas de resonancia magnética vean mejor tu interior."],
+    [65,"Tb","Terbio","158.93","lanthanide",11,8,"Ayuda a producir luz verde brillante en focos ahorradores de energía y pantallas."],
+    [66,"Dy","Disprosio","162.50","lanthanide",12,8,"Se usa dentro de los discos duros de las computadoras para guardar tu información."],
+    [67,"Ho","Holmio","164.93","lanthanide",13,8,"Tiene propiedades magnéticas muy fuertes, ¡de las más potentes que existen en la naturaleza!"],
+    [68,"Er","Erbio","167.26","lanthanide",14,8,"Se usa en los cables de fibra óptica para amplificar la señal de internet bajo el mar."],
+    [69,"Tm","Tulio","168.93","lanthanide",15,8,"Es uno de los elementos más raros y caros de la Tierra, ¡se usa en equipos médicos portátiles!"],
+    [70,"Yb","Iterbio","173.05","lanthanide",16,8,"Ayuda a mantener el tiempo en relojes atómicos experimentales súper precisos."],
+    [71,"Lu","Lutecio","174.97","lanthanide",17,8,"Es el lantánido más denso y duro, usado en algunos escáneres médicos de hospitales."],
+    [72,"Hf","Hafnio","178.49","transition",4,6,"Resiste temperaturas extremas, ¡se usa en las barras de control de los reactores nucleares!"],
+    [73,"Ta","Tantalio","180.95","transition",5,6,"Es resistente a la corrosión y se usa dentro de los celulares para guardar la carga de la batería."],
+    [74,"W","Wolframio","183.84","transition",6,6,"¡Tiene el punto de fusión más alto de todos los metales! Por eso brillaba en los focos antiguos."],
+    [75,"Re","Renio","186.21","transition",7,6,"Se usa en los motores de los aviones a reacción porque soporta calores extremos sin derretirse."],
+    [76,"Os","Osmio","190.23","transition",8,6,"Es el metal natural más denso que existe, ¡una pelotita pequeña pesaría muchísimo!"],
+    [77,"Ir","Iridio","192.22","transition",9,6,"Es tan resistente que las plumas fuente de lujo lo usan para no desgastarse nunca."],
+    [78,"Pt","Platino","195.08","transition",10,6,"Brillante y muy valioso, se usa en joyería fina y también dentro del motor de los coches."],
+    [79,"Au","Oro","196.97","transition",11,6,"¡El rey de los metales preciosos! No se oxida jamás y brilla como el sol; encanta a los piratas."],
+    [80,"Hg","Mercurio","200.59","transition",12,6,"Es el único metal líquido a temperatura ambiente, ¡se movía dentro de los termómetros antiguos!"],
+    [81,"Tl","Talio","204.38","posttrans",13,6,"Antes se usaba en algunos venenos para ratas, hoy se maneja con mucho cuidado en laboratorios."],
+    [82,"Pb","Plomo","207.2","posttrans",14,6,"Es un metal pesado y blando; antiguamente se usaba en tuberías, ¡hoy sabemos que hay que evitarlo!"],
+    [83,"Bi","Bismuto","208.98","posttrans",15,6,"Al derretirse y enfriarse lentamente forma cristales con colores del arcoíris, ¡como escalera mágica!"],
+    [84,"Po","Polonio","209","posttrans",16,6,"Fue descubierto por Marie Curie y nombrado en honor a su país natal, Polonia."],
+    [85,"At","Astato","210","halogen",17,6,"Es tan raro que en toda la Tierra solo existe una cantidad diminuta, ¡menos de un gramo!"],
+    [86,"Rn","Radón","222","noble",18,6,"Es un gas invisible que sale de las rocas; por eso se revisan las casas para medirlo."],
+    [87,"Fr","Francio","223","alkali",1,7,"Es uno de los elementos más raros e inestables de la Tierra, ¡dura muy poco antes de transformarse!"],
+    [88,"Ra","Radio","226","alkaline",2,7,"Brilla débilmente en la oscuridad y fue descubierto por Marie Curie, ¡una científica genial!"],
+    [89,"Ac","Actinio","227","actinide",3,9,"Le da nombre a toda una familia de elementos llamados actínidos, ¡como si fuera su líder!"],
+    [90,"Th","Torio","232.04","actinide",4,9,"Podría usarse algún día para generar energía nuclear más segura en el futuro."],
+    [91,"Pa","Protactinio","231.04","actinide",5,9,"Es un elemento súper raro que casi no se encuentra en la naturaleza."],
+    [92,"U","Uranio","238.03","actinide",6,9,"Se usa para generar energía en plantas nucleares, ¡puede iluminar ciudades enteras!"],
+    [93,"Np","Neptunio","237","actinide",7,9,"Fue el primer elemento creado por científicos que no existe de forma natural en la Tierra."],
+    [94,"Pu","Plutonio","244","actinide",8,9,"Se ha usado para dar energía a las sondas espaciales que exploran los planetas lejanos."],
+    [95,"Am","Americio","243","actinide",9,9,"¡Sorpresa! Hay una pizca de este elemento dentro de los detectores de humo de tu casa."],
+    [96,"Cm","Curio","247","actinide",10,9,"Fue nombrado en honor a Marie y Pierre Curie, los famosos científicos de la radiactividad."],
+    [97,"Bk","Berkelio","247","actinide",11,9,"Fue nombrado así en honor a la ciudad de Berkeley, California, donde se descubrió."],
+    [98,"Cf","Californio","251","actinide",12,9,"Se usa para ayudar a detectar metales y minerales escondidos bajo la tierra."],
+    [99,"Es","Einstenio","252","actinide",13,9,"Fue descubierto entre los restos de una explosión de prueba nuclear en los años 50."],
+    [100,"Fm","Fermio","257","actinide",14,9,"Nombrado en honor a Enrico Fermi, un científico que ayudó a entender los átomos."],
+    [101,"Md","Mendelevio","258","actinide",15,9,"Nombrado en honor a Dmitri Mendeléyev, ¡el científico que inventó la tabla periódica!"],
+    [102,"No","Nobelio","259","actinide",16,9,"Nombrado en honor a Alfred Nobel, el creador de los famosos Premios Nobel."],
+    [103,"Lr","Laurencio","266","actinide",17,9,"Nombrado en honor a Ernest Lawrence, el inventor de una máquina llamada ciclotrón."],
+    [104,"Rf","Rutherfordio","267","transition",4,7,"Solo existen unos pocos átomos de este elemento creados en laboratorios especiales."],
+    [105,"Db","Dubnio","268","transition",5,7,"Es tan inestable que desaparece en fracciones de segundo después de ser creado."],
+    [106,"Sg","Seaborgio","269","transition",6,7,"Nombrado en honor a Glenn Seaborg, un científico que descubrió muchísimos elementos."],
+    [107,"Bh","Bohrio","270","transition",7,7,"Nombrado en honor a Niels Bohr, quien ayudó a explicar cómo son los átomos por dentro."],
+    [108,"Hs","Hasio","269","transition",8,7,"Nombrado en honor al estado alemán de Hesse, donde está el laboratorio que lo creó."],
+    [109,"Mt","Meitnerio","278","unknown",9,7,"Nombrado en honor a Lise Meitner, una brillante científica que estudió la física nuclear."],
+    [110,"Ds","Darmstatio","281","unknown",10,7,"Fue descubierto en la ciudad de Darmstadt, Alemania, y lleva su nombre."],
+    [111,"Rg","Roentgenio","282","unknown",11,7,"Nombrado en honor a Wilhelm Röntgen, el científico que descubrió los rayos X."],
+    [112,"Cn","Copernicio","285","transition",12,7,"Nombrado en honor al astrónomo Nicolás Copérnico, quien descubrió que la Tierra gira alrededor del Sol."],
+    [113,"Nh","Nihonio","286","posttrans",13,7,"¡El primer elemento descubierto en Asia! Su nombre significa 'Japón' en japonés."],
+    [114,"Fl","Flerovio","289","posttrans",14,7,"Nombrado en honor al Laboratorio Flerov, donde científicos crean elementos súper pesados."],
+    [115,"Mc","Moscovio","290","posttrans",15,7,"Nombrado en honor a la región de Moscú, Rusia, donde fue descubierto."],
+    [116,"Lv","Livermorio","293","posttrans",16,7,"Nombrado en honor al Laboratorio Nacional Lawrence Livermore, en Estados Unidos."],
+    [117,"Ts","Teneso","294","halogen",17,7,"Nombrado en honor al estado de Tennessee, Estados Unidos, donde ayudaron a crearlo."],
+    [118,"Og","Oganesón","294","noble",18,7,"¡El elemento más pesado conocido! Nombrado en honor al científico Yuri Oganessian."]
+  ];
+
+  const categoryColor = {
+    nonmetal:   "76,175,80",
+    noble:      "156,39,176",
+    alkali:     "244,67,54",
+    alkaline:   "255,152,0",
+    metalloid:  "0,150,136",
+    halogen:    "205,220,57",
+    posttrans:  "96,125,139",
+    transition: "33,150,243",
+    lanthanide: "233,30,140",
+    actinide:   "0,188,212",
+    unknown:    "121,85,72"
+  };
+
+  const elements = raw.map(r => ({
+    number:r[0], symbol:r[1], name:r[2], mass:r[3], category:r[4], group:r[5], period:r[6], fact:r[7]
+  }));
+
+  // ============ SONIDO (Web Audio API, sin archivos externos) ============
+  let audioCtx = null;
+  let soundEnabled = true;
+  function getCtx(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e){ audioCtx = null; }
+    }
+    return audioCtx;
+  }
+  function tone(freq, start, dur, type, gainPeak){
+    const ctx = getCtx();
+    if(!ctx || !soundEnabled) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+    gain.gain.setValueAtTime(0, ctx.currentTime + start);
+    gain.gain.linearRampToValueAtTime(gainPeak || 0.25, ctx.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + start);
+    osc.stop(ctx.currentTime + start + dur + 0.05);
+  }
+  function playSuccessSound(){
+    // arpegio ascendente alegre
+    tone(523.25, 0.00, 0.18, 'triangle', 0.28); // C5
+    tone(659.25, 0.09, 0.18, 'triangle', 0.28); // E5
+    tone(783.99, 0.18, 0.20, 'triangle', 0.30); // G5
+    tone(1046.5, 0.27, 0.30, 'triangle', 0.32); // C6
+  }
+  function playErrorSound(){
+    tone(220, 0.0, 0.16, 'sawtooth', 0.18);
+    tone(160, 0.10, 0.22, 'sawtooth', 0.16);
+  }
+  function playLevelUpSound(){
+    tone(659.25, 0.00, 0.15, 'square', 0.22);
+    tone(783.99, 0.08, 0.15, 'square', 0.22);
+    tone(987.77, 0.16, 0.15, 'square', 0.22);
+    tone(1318.5, 0.26, 0.35, 'square', 0.28);
+  }
+  document.getElementById('soundToggle').addEventListener('click', function(){
+    soundEnabled = !soundEnabled;
+    this.textContent = soundEnabled ? '🔊' : '🔇';
+    if(soundEnabled) getCtx();
+  });
+
+
+  /* =====================================================================
+     MODAL DE DONACIÓN
+  ===================================================================== */
+  const donateOverlay = document.getElementById('donateOverlay');
+  document.getElementById('btnDonate').addEventListener('click', () => donateOverlay.classList.add('open'));
+  document.getElementById('donateClose').addEventListener('click', () => donateOverlay.classList.remove('open'));
+  donateOverlay.addEventListener('click', (e) => { if(e.target === donateOverlay) donateOverlay.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => { if(e.key === 'Escape' && donateOverlay.classList.contains('open')) donateOverlay.classList.remove('open'); });
+
+
+  // ============ ESCENA THREE.JS ============
+  let camera, scene, renderer, controls;
+  const objects = [];
+  const targetsTable = [], targetsSphere = [], targetsHelix = [], targetsGrid = [];
+
+  init();
+  animate();
+
+  function init(){
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 1, 10000);
+    camera.position.z = 3500;
+
+    scene = new THREE.Scene();
+
+    elements.forEach((el) => {
+      const div = document.createElement('div');
+      div.className = 'element';
+      const rgb = categoryColor[el.category] || "100,100,100";
+      div.style.background = `rgba(${rgb},0.55)`;
+      div.style.borderTop = `3px solid rgba(${rgb},1)`;
+      div.innerHTML = `
+        <div class="number">${el.number}</div>
+        <div class="symbol">${el.symbol}</div>
+        <div class="name">${el.name}</div>
+        <div class="mass">${el.mass}</div>
+      `;
+      div.addEventListener('click', () => onElementClick(el, div));
+
+      const object = new THREE.CSS3DObject(div);
+      object.position.x = Math.random()*4000 - 2000;
+      object.position.y = Math.random()*4000 - 2000;
+      object.position.z = Math.random()*4000 - 2000;
+      scene.add(object);
+      objects.push(object);
+
+      // ---- posición TABLA (según grupo/columna y periodo/fila reales) ----
+      const tableObj = new THREE.Object3D();
+      tableObj.position.x = (el.group * 140) - 1330;
+      tableObj.position.y = -(el.period * 180) + 990;
+      targetsTable.push(tableObj);
+    });
+
+    // ---- posiciones ESFERA (algoritmo clásico de distribución esférica) ----
+    const vector = new THREE.Vector3();
+    const l = objects.length;
+    for(let i=0;i<l;i++){
+      const phi = Math.acos(-1 + (2*i)/l);
+      const theta = Math.sqrt(l*Math.PI) * phi;
+      const o = new THREE.Object3D();
+      o.position.setFromSphericalCoords(800, phi, theta);
+      vector.copy(o.position).multiplyScalar(2);
+      o.lookAt(vector);
+      targetsSphere.push(o);
+    }
+
+    // ---- posiciones HÉLICE ----
+    for(let i=0;i<l;i++){
+      const theta = i * 0.175 + Math.PI;
+      const y = -(i * 8) + 450;
+      const o = new THREE.Object3D();
+      o.position.setFromCylindricalCoords(900, theta, y);
+      vector.x = o.position.x * 2;
+      vector.y = o.position.y;
+      vector.z = o.position.z * 2;
+      o.lookAt(vector);
+      targetsHelix.push(o);
+    }
+
+    // ---- posiciones CUADRÍCULA ----
+    for(let i=0;i<l;i++){
+      const o = new THREE.Object3D();
+      o.position.x = ((i % 5) * 400) - 800;
+      o.position.y = (-(Math.floor(i/5) % 5) * 400) + 800;
+      o.position.z = (Math.floor(i/25)) * 1000 - 2000;
+      targetsGrid.push(o);
+    }
+
+    renderer = new THREE.CSS3DRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('container').appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.rotateSpeed = 0.6;
+    controls.zoomSpeed = 0.9;
+    controls.minDistance = 500;
+    controls.maxDistance = 8000;
+    controls.enablePan = false;
+
+    // arranca en modo tabla
+    moveToTargets(targetsTable, 1800);
+
+    window.addEventListener('resize', onResize);
+    document.getElementById('buttons').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      document.querySelectorAll('#buttons button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const mode = btn.dataset.mode;
+      const map = { table:targetsTable, sphere:targetsSphere, helix:targetsHelix, grid:targetsGrid };
+      moveToTargets(map[mode], 1800);
+    });
+  }
+
+  function onResize(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function moveToTargets(targets, duration){
+    const startTime = performance.now();
+    const starts = objects.map(o => ({ pos:o.position.clone(), quat:o.quaternion.clone() }));
+
+    function step(now){
+      const t = Math.min((now - startTime)/duration, 1);
+      const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+      for(let i=0;i<objects.length;i++){
+        objects[i].position.lerpVectors(starts[i].pos, targets[i].position, ease);
+        const targetQuat = new THREE.Quaternion().setFromEuler(targets[i].rotation);
+        objects[i].quaternion.slerpQuaternions(starts[i].quat, targetQuat, ease);
+      }
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // ============ JUEGO: CAZA DEL ELEMENTO ============
+  let score = 0;
+  let level = 1;
+  let currentTarget = null;
+  const missionText = document.getElementById('missionText');
+  const missionPanel = document.getElementById('missionPanel');
+  const scoreValue = document.getElementById('scoreValue');
+  const levelValue = document.getElementById('levelValue');
+  const levelBanner = document.getElementById('levelBanner');
+
+  function pickNewTarget(){
+    let next;
+    do { next = elements[Math.floor(Math.random()*elements.length)]; }
+    while(currentTarget && next.symbol === currentTarget.symbol && elements.length > 1);
+    currentTarget = next;
+    missionText.textContent = `${currentTarget.name} (${currentTarget.symbol})`;
+  }
+  pickNewTarget();
+
+  function spawnStars(x, y){
+    for(let i=0;i<8;i++){
+      const s = document.createElement('div');
+      s.className = 'star-burst';
+      s.textContent = '⭐';
+      s.style.left = x + 'px';
+      s.style.top = y + 'px';
+      s.style.setProperty('--dx', (Math.random()*160-80) + 'px');
+      document.body.appendChild(s);
+      setTimeout(()=> s.remove(), 1200);
+    }
+  }
+
+  const confettiColors = ['#ff5252','#ffd166','#39ff6a','#42a5f5','#e91e8c','#00bcd4','#ff9800'];
+  function spawnConfetti(){
+    const count = 26;
+    for(let i=0;i<count;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      const startX = Math.random()*window.innerWidth;
+      const dur = 1.6 + Math.random()*1.2;
+      c.style.left = startX + 'px';
+      c.style.background = confettiColors[i % confettiColors.length];
+      c.style.animationDuration = dur + 's';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      setTimeout(()=> c.remove(), dur*1000 + 100);
+    }
+  }
+
+  function showLevelBanner(text){
+    levelBanner.textContent = text;
+    levelBanner.classList.remove('show'); void levelBanner.offsetWidth;
+    levelBanner.classList.add('show');
+  }
+
+  function onElementClick(el, div){
+    const rect = div.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const isCorrect = currentTarget && el.symbol === currentTarget.symbol;
+
+    if(isCorrect){
+      div.classList.remove('wrong'); void div.offsetWidth;
+      div.classList.add('correct');
+      score += 10;
+      scoreValue.textContent = score;
+      spawnStars(cx, cy);
+      spawnConfetti();
+      playSuccessSound();
+      missionPanel.classList.remove('pulse'); void missionPanel.offsetWidth;
+      missionPanel.classList.add('pulse');
+
+      // sube de nivel cada 5 aciertos
+      if(score % 50 === 0){
+        level += 1;
+        levelValue.textContent = level;
+        showLevelBanner('🎉 ¡NIVEL ' + level + '! 🎉');
+        playLevelUpSound();
+      }
+    } else {
+      div.classList.remove('correct'); void div.offsetWidth;
+      div.classList.add('wrong');
+      missionPanel.classList.remove('shake'); void missionPanel.offsetWidth;
+      missionPanel.classList.add('shake');
+      playErrorSound();
+    }
+
+    showPopup(el, isCorrect);
+  }
+
+  // ============ POPUP DE DATOS CURIOSOS ============
+  const overlay = document.getElementById('overlay');
+  const popSymbol = document.getElementById('popSymbol');
+  const popName = document.getElementById('popName');
+  const popFact = document.getElementById('popFact');
+  const popTag = document.getElementById('popTag');
+  const popClose = document.getElementById('popClose');
+
+  function showPopup(el, isCorrect){
+    const rgb = categoryColor[el.category] || "100,100,100";
+    popSymbol.style.color = `rgb(${rgb})`;
+    popSymbol.textContent = el.symbol;
+    popName.textContent = `${el.name} · #${el.number}`;
+    popFact.textContent = el.fact;
+
+    if(currentTarget){
+      popTag.innerHTML = isCorrect
+        ? `<span class="resultTag ok">✅ ¡Correcto! +10 ⭐</span>`
+        : `<span class="resultTag no">🔎 Ese no era... ¡sigue buscando!</span>`;
+    } else {
+      popTag.innerHTML = '';
+    }
+
+    overlay.style.display = 'flex';
+    overlay.dataset.wasCorrect = isCorrect ? '1' : '0';
+  }
+
+  popClose.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    if(overlay.dataset.wasCorrect === '1'){
+      pickNewTarget();
+    }
+  });
+  overlay.addEventListener('click', (e)=>{
+    if(e.target === overlay){
+      overlay.style.display = 'none';
+      if(overlay.dataset.wasCorrect === '1') pickNewTarget();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
